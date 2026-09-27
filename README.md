@@ -4,7 +4,7 @@
 
 ## Endpoints
 
-- `POST /v1/chat/completions`
+- `POST /v1/chat/completions`（通过 Vercel rewrite 转到内部 `/api/v1/chat/completions`）
 - `GET /v1/models`
 - `GET /v1/health`
 - `/api/gemini`：旧 Gemini 代理兼容路径，迁移完成前保留
