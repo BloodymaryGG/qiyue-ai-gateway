@@ -22,7 +22,7 @@ async function handle(req) {
   if (!usageConfigured()) return json({ error: { message: 'usage database is not configured', code: 'usage_not_configured' } }, 503);
   const url = new URL(req.url);
   try {
-    const data = await readUsage({ days: url.searchParams.get('days'), project: url.searchParams.get('project'), limit: url.searchParams.get('limit') });
+    const data = await readUsage({ days: url.searchParams.get('days'), project: url.searchParams.get('project'), model: url.searchParams.get('model'), limit: url.searchParams.get('limit') });
     return json({ ok: true, ...data });
   } catch (error) {
     console.error('[usage] read failed', error?.message || error);
