@@ -26,6 +26,8 @@ Authorization: Bearer <project-token>
 
 用量统计使用 Neon Postgres。先将 `usage/schema.sql` 执行到数据库，再把 `DATABASE_URL` 和独立的 `GATEWAY_ADMIN_TOKEN` 添加到 Vercel Production 环境。统计页为 `/api/admin`，统计接口为 `/api/admin/usage`，只保存应用、模型、token、耗时和状态，不保存提示词或模型回复。
 
+预计花费由 `lib/pricing.mjs` 的版本化内置价格表计算，不需要把价格全部填入 Vercel。当前内置 `gemini-2.5-flash-lite`、`qwen-plus` 和 `deepseek-flash` 的官方列表价格；如果账户有特殊合同价，可用 `.env.example` 中的 `GATEWAY_*_INPUT_PER_1M` / `GATEWAY_*_OUTPUT_PER_1M` 覆盖。Qwen 和 DeepSeek 的人民币价格会按 `GATEWAY_CNY_TO_USD`（默认 0.14）转换为数据库中的 USD 估算值。DeepSeek 按北京时间工作日 9:00–12:00、14:00–18:00 估算高峰价，法定节假日需手动调整或覆盖价格。
+
 ## Models
 
 - `qy-fast`：默认走 `GATEWAY_FAST_PROVIDER`，适合快速任务
