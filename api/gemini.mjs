@@ -15,4 +15,4 @@ export default async function handler(req) {
   return new Response(upstream.body, { status: upstream.status, headers: { 'Content-Type': upstream.headers.get('Content-Type') || 'text/plain', 'Cache-Control': 'no-store' } });
 }
 
-export const config = { runtime: 'nodejs20.x', regions: ['iad1'] };
+export const config = { runtime: 'nodejs', regions: ['iad1'] };

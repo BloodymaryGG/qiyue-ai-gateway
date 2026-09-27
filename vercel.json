@@ -1,8 +1,4 @@
 {
-  "functions": {
-    "api/**/*.mjs": {
-      "runtime": "nodejs20.x",
-      "regions": ["iad1"]
-    }
-  }
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": ["iad1"]
 }
