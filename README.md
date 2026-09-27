@@ -26,7 +26,7 @@ Authorization: Bearer <project-token>
 - `qy-smart`：默认走 `GATEWAY_SMART_PROVIDER`，适合复杂任务
 - `qy-gemini`：明确使用 Gemini
 - `qy-qwen`：明确使用 Qwen
-- `qy-deepseek`：明确使用 DeepSeek
+- `qy-deepseek`：明确使用 DeepSeek Flash
 
 模型别名可以在不修改各个项目的情况下切换上游模型。
 
