@@ -2,8 +2,15 @@ import { authenticate, corsHeaders, json, methodNotAllowed, unauthorized } from 
 import { createCompletion, GatewayError, resolveModel } from '../../../lib/providers.mjs';
 import { recordUsage } from '../../../lib/usage.mjs';
 import { waitUntil } from '@vercel/functions';
+import { sendResponse, toWebRequest } from '../../../lib/vercel.mjs';
 
-export default async function handler(req) {
+export default async function handler(req, res) {
+  req = await toWebRequest(req);
+  const response = await handle(req);
+  return sendResponse(res, response);
+}
+
+async function handle(req) {
   if (req.method === 'OPTIONS') return json({ ok: true });
   if (req.method !== 'POST') return methodNotAllowed();
   const identity = authenticate(req);
