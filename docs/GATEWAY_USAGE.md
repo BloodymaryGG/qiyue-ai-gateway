@@ -40,8 +40,8 @@ X-Qiyue-Token: <该应用自己的 Gateway Token>
 
 | 请求模型 | 默认上游 | 用途 |
 |---|---|---|
-| `qy-fast` | Qwen | 日常快速任务 |
-| `qy-smart` | DeepSeek | 复杂任务 |
+| `qy-fast` | Gemini → Qwen → DeepSeek | 日常快速任务 |
+| `qy-smart` | Gemini → Qwen → DeepSeek | 复杂任务 |
 | `qy-gemini` | Gemini | 明确使用 Gemini |
 | `qy-qwen` | Qwen | 明确使用 Qwen |
 | `qy-deepseek` | DeepSeek Flash | 明确使用 DeepSeek |
@@ -49,12 +49,20 @@ X-Qiyue-Token: <该应用自己的 Gateway Token>
 当前建议的 Vercel Production 配置：
 
 ```env
-GATEWAY_FAST_PROVIDER=qwen
-GATEWAY_SMART_PROVIDER=deepseek
-GATEWAY_GEMINI_MODEL=gemini-2.5-flash-lite
+GATEWAY_FAST_PROVIDER=gemini
+GATEWAY_SMART_PROVIDER=gemini
+GATEWAY_GEMINI_MODEL=gemini-2.5-flash
 GATEWAY_QWEN_MODEL=qwen-plus
 GATEWAY_DEEPSEEK_MODEL=deepseek-flash
+
+# 每个项目自己的优先级。请求 qy-fast / qy-smart 时按对应项目 Token 选择。
+# 发生 408、409、425、429 或 5xx 时自动尝试下一个供应商。
+GATEWAY_QIYUE_WEB_ORDER=gemini,qwen,deepseek
+GATEWAY_TODOAI_ORDER=gemini,qwen,deepseek
+GATEWAY_IOS_ORDER=gemini,qwen,deepseek
 ```
+
+项目级顺序优先于 `GATEWAY_FAST_PROVIDER` / `GATEWAY_SMART_PROVIDER`。客户端不能在请求中自行改顺序；网关根据 Token 识别项目，避免应用绕过既定成本和供应商策略。网关后台的用量记录会同时保存请求别名、实际供应商和实际模型，因此可以看到 `qy-fast` 最终实际落到了哪一个模型。
 
 换模型时只改 Vercel 环境变量并重新部署，客户端不需要改代码。
 
@@ -333,4 +341,3 @@ https://ai.qiyueastro.com/v1/chat/completions
 以后让其他项目接入时，可以直接说：
 
 > 使用 Qiyue AI Gateway。阅读仓库 `docs/GATEWAY_USAGE.md`，使用生产 Base URL `https://ai.qiyueastro.com/v1`，为该项目创建独立 Gateway Token，默认模型使用 `qy-fast`，不要接触或复制任何上游 API Key。
-

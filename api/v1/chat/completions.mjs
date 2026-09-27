@@ -1,5 +1,5 @@
 import { authenticate, corsHeaders, json, methodNotAllowed, unauthorized } from '../../../lib/auth.mjs';
-import { createCompletion, GatewayError, resolveModel } from '../../../lib/providers.mjs';
+import { createCompletion, GatewayError, resolveModels } from '../../../lib/providers.mjs';
 import { recordUsage } from '../../../lib/usage.mjs';
 import { waitUntil } from '@vercel/functions';
 import { sendResponse, toWebRequest } from '../../../lib/vercel.mjs';
@@ -20,17 +20,31 @@ async function handle(req) {
   try {
     const body = await req.json();
     if (!Array.isArray(body?.messages) || body.messages.length === 0) return json({ error: { message: 'messages is required', type: 'invalid_request_error', code: 'invalid_messages' } }, 400);
-    const selected = resolveModel(body.model);
-    if (!selected) return json({ error: { message: `unsupported model: ${body.model}`, type: 'invalid_request_error', code: 'unsupported_model' } }, 400);
-    const result = await createCompletion({
-      requested: selected.requested,
-      provider: selected.provider,
-      model: selected.model,
-      messages: body.messages,
-      temperature: typeof body.temperature === 'number' ? body.temperature : 0.4,
-      maxTokens: Number.isInteger(body.max_tokens) ? body.max_tokens : 2048,
-      stream: Boolean(body.stream),
-    });
+    const candidates = resolveModels(body.model, identity.project);
+    if (!candidates.length) return json({ error: { message: `unsupported model: ${body.model}`, type: 'invalid_request_error', code: 'unsupported_model' } }, 400);
+    let result = null;
+    let lastGatewayError = null;
+    for (const selected of candidates) {
+      try {
+        const candidate = await createCompletion({
+          requested: selected.requested,
+          provider: selected.provider,
+          model: selected.model,
+          messages: body.messages,
+          temperature: typeof body.temperature === 'number' ? body.temperature : 0.4,
+          maxTokens: Number.isInteger(body.max_tokens) ? body.max_tokens : 2048,
+          stream: Boolean(body.stream),
+          responseFormat: body.response_format,
+        });
+        result = candidate;
+        if (candidate.upstream.ok || !shouldFailover(candidate.upstream.status) || selected === candidates[candidates.length - 1]) break;
+        await candidate.upstream.text().catch(() => '');
+      } catch (error) {
+        lastGatewayError = error;
+        if (!(error instanceof GatewayError) || selected === candidates[candidates.length - 1]) throw error;
+      }
+    }
+    if (!result) throw lastGatewayError || new GatewayError('no provider available', 503, 'provider_not_configured');
     if (!result.upstream.ok) {
       const response = await providerError(result.upstream);
       saveUsage({ project: identity.project, requestedModel: result.requested, provider: result.provider, providerModel: result.model, status: 'provider_error', statusCode: response.status, latencyMs: Date.now() - startedAt, streamed: Boolean(body.stream) });
@@ -46,6 +60,10 @@ async function handle(req) {
     console.warn('[gateway] request failed', error?.message || error);
     return json({ error: { message: 'gateway request failed', type: 'gateway_error', code: 'gateway_request_failed' } }, 502);
   }
+}
+
+function shouldFailover(status) {
+  return status === 408 || status === 409 || status === 425 || status === 429 || status >= 500;
 }
 
 function saveUsage(payload) {
