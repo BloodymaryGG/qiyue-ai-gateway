@@ -11,6 +11,8 @@
 - `GET /api/admin/usage`：管理员用量 JSON
 - `GET /api/admin`：管理员用量页面
 
+完整的接入、Token、模型、价格、部署和故障排查说明见 [`docs/GATEWAY_USAGE.md`](docs/GATEWAY_USAGE.md)。
+
 ## Authentication
 
 新接口使用：
